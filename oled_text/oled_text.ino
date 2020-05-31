@@ -115,7 +115,7 @@ void loop() {
       inputApp();
       break;
     case 4:
-      emptyApp();
+      boardApp();
       break;
     case 5:
       aboutApp();
@@ -167,7 +167,7 @@ void dislayMenu() {
   menu[0] = "GRE       ";
   menu[1] = "TIME      ";
   menu[2] = "KEYBOARD  ";
-  menu[3] = "SETTINGS  ";
+  menu[3] = "MSG BOARD ";
   menu[4] = "ABOUT     ";
 
 
@@ -231,6 +231,65 @@ void homeApp() {
       break;
     }
 
+    delay(10);
+  }
+}
+
+void boardApp() {
+  display.setTextColor(SSD1306_WHITE);
+  display.setTextSize(2);
+
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin("http://128.199.223.52:8088/notice");
+    int httpCode = http.GET();
+
+    if (httpCode > 0) {
+      DynamicJsonDocument doc(1024);
+      DeserializationError error = deserializeJson(doc, http.getString());
+      if (error) {
+        showError("Error API response.");
+        return;
+      }
+
+      const char* line1 = doc["line_1"]; 
+      const char* line2 = doc["line_2"];
+      const char* line3 = doc["line_3"];
+      const char* line4 = doc["line_4"];
+
+      display.clearDisplay();
+
+      display.setCursor(0, 0);
+      display.print(line1);
+      display.setCursor(0, 16);
+      display.print(line2);
+      display.setCursor(0, 32);
+      display.print(line3);
+      display.setCursor(0, 48);
+      display.print(line4);
+  
+      display.display();
+    } else {
+      showError("Error API response.");
+    }
+    http.end();
+  } else {
+    showError("Connection Lost");
+  }
+
+  // 5 second
+  for (int i=0; i < 500; i++) {
+    temp = digitalRead(btnPin3);
+    if (temp == HIGH) {
+      delay(200);
+    }
+    
+    temp = digitalRead(btnPin1);
+    if (temp == HIGH) {
+      delay(200);
+      currentApp = 0;
+      break;
+    }
     delay(10);
   }
 }
